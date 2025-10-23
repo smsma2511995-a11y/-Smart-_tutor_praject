@@ -355,3 +355,75 @@ def _load_comprehensive_knowledge(self):
             }
         }
         }
+# models/knowledge_base.py - إضافة محتوى غني
+def _load_comprehensive_knowledge(self):
+    return {
+        # ... المواد الحالية
+        
+        # إضافة محتوى غني للرياضيات
+        "math": {
+            "name": {"ar": "الرياضيات", "en": "Mathematics", "fr": "Mathématiques"},
+            "concepts": {
+                "algebra": {
+                    "ar": """الجبر هو فرع الرياضيات الذي يدرس الرموز الرياضية والعلاقات بينها.
+                    
+**المفاهيم الأساسية:**
+- المتغيرات والمعادلات
+- الدوال والرسوم البيانية
+- المعادلات الخطية والتربيعية
+- المصفوفات والمحددات
+
+**التطبيقات العملية:**
+- حل مسائل الحياة اليومية
+- التحليل المالي والاقتصادي
+- البرمجة والذكاء الاصطناعي""",
+                    
+                    "en": """Algebra is the branch of mathematics that studies mathematical symbols and relationships between them.
+
+**Core Concepts:**
+- Variables and equations
+- Functions and graphs
+- Linear and quadratic equations
+- Matrices and determinants
+
+**Practical Applications:**
+- Solving daily life problems
+- Financial and economic analysis
+- Programming and artificial intelligence""",
+                    
+                    "fr": """L'algèbre est la branche des mathématiques qui étudie les symboles mathématiques et les relations entre eux.
+
+**Concepts de Base:**
+- Variables et équations
+- Fonctions et graphiques
+- Équations linéaires et quadratiques
+- Matrices et déterminants
+
+**Applications Pratiques:**
+- Résolution de problèmes quotidiens
+- Analyse financière et économique
+- Programmation et intelligence artificielle"""
+                },
+                # ... إضافة 5-10 مفاهيم إضافية لكل مادة
+            },
+            "examples": {
+                "algebra": {
+                    "ar": [
+                        "مثال 1: حل المعادلة 2س + 5 = 11 → س = 3",
+                        "مثال 2: حل النظام س + ص = 5، س - ص = 1 → س=3، ص=2",
+                        "مثال 3: تحليل المقدار س² - 4 → (س-2)(س+2)"
+                    ],
+                    "en": [
+                        "Example 1: Solve 2x + 5 = 11 → x = 3",
+                        "Example 2: Solve system x + y = 5, x - y = 1 → x=3, y=2", 
+                        "Example 3: Factor x² - 4 → (x-2)(x+2)"
+                    ],
+                    "fr": [
+                        "Exemple 1: Résoudre 2x + 5 = 11 → x = 3",
+                        "Exemple 2: Résoudre le système x + y = 5, x - y = 1 → x=3, y=2",
+                        "Exemple 3: Factoriser x² - 4 → (x-2)(x+2)"
+                    ]
+                }
+            }
+        }
+                       }

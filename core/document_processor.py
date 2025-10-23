@@ -182,7 +182,33 @@ class DocumentProcessor:
         chunks = self.chunk_text(text)
         if not chunks:
             return False, "لا يمكن تقسيم النص إلى أجزاء مناسبة"
-        
+        # في core/document_processor.py - التعلم التلقائي
+def learn_from_documents(self):
+    """التعلم التلقائي من المستندات المضافة"""
+    for subject in self.ram_knowledge:
+        if subject not in self.known_subjects:
+            print(f"🎯 تعلم مادة جديدة: {subject}")
+            self._add_new_subject_to_knowledge(subject)
+
+def _add_new_subject_to_knowledge(self, subject):
+    """إضافة مادة جديدة إلى قاعدة المعرفة"""
+    # يمكنك هنا إضافة المنطق لإنشاء معرفة أولية للمادة الجديدة
+    # بناءً على المحتوى المستخرج من المستندات
+    
+    basic_concepts = {
+        "basic": {
+            "ar": f"هذا مفهوم أساسي في مادة {subject}",
+            "en": f"This is a basic concept in {subject}",
+            "fr": f"C'est un concept de base en {subject}"
+        }
+    }
+    
+    # إضافة للمعرفة المؤقتة
+    if subject not in self.ram_knowledge:
+        self.ram_knowledge[subject] = {}
+    
+    # يمكن حفظها بشكل دائم أيضاً
+    self._save_subject_knowledge(subject, basic_concepts)
         # إنشاء التضمينات
         embeddings = self.embed_texts(chunks)
         

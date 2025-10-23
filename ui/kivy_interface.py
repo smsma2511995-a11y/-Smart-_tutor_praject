@@ -169,14 +169,26 @@ class EnhancedTutorApp(App):
         
         # الحصول على المادة المختارة
         subject = None
-        if self.subject_spinner.text != 'جميع المواد':
-            subject_map = {
-                'الرياضيات': 'math',
-                'اللغة الإنجليزية': 'english',
-                'اللغة الفرنسية': 'french', 
-                'العلوم': 'science',
-                'العربية': 'arabic',
-                'التاريخ': 'history'
+        if # في ui/kivy_interface.py - تحديث قائمة المواد
+self.subject_spinner = Spinner(
+    text='جميع المواد',
+    values=[
+        'جميع المواد', 
+        'الرياضيات', 
+        'اللغة الإنجليزية', 
+        'اللغة الفرنسية', 
+        'العلوم', 
+        'العربية',
+        'الفيزياء',      # جديد
+        'الكيمياء',      # جديد  
+        'التاريخ',       # جديد
+        'الجغرافيا',     # جديد
+        'الفلسفة',       # جديد
+        'الاقتصاد'       # جديد
+    ],
+    size_hint=(0.25, 1),
+    background_color=(0.3, 0.5, 0.9, 1)
+        )
             }
             subject = subject_map.get(self.subject_spinner.text)
         

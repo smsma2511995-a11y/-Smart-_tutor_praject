@@ -277,3 +277,59 @@ class SmartAnswerGenerator:
             suggestion_en="Try solving practical exercises and ask your teacher for help if needed.",
             suggestion_fr="Essayez de résoudre des exercices pratiques et demandez de l'aide à votre enseignant si nécessaire."
         )
+# في models/answer_generator.py - التكيف مع المواد الجديدة
+def generate_response(self, question, subject, source_language, target_language="ar"):
+    """توليد إجابة ذكية - تتكيف مع أي مادة"""
+    
+    # إذا كانت المادة غير معروفة في قاعدة المعرفة، نستخدم النمط العام
+    if subject not in self.kb.subjects:
+        return self._generate_for_new_subject(question, subject, target_language)
+    
+    # ... الكود الأصلي للمواد المعرفة
+
+def _generate_for_new_subject(self, question, subject, target_language):
+    """توليد إجابة للمواد الجديدة"""
+    
+    templates = {
+        "ar": f"""
+🤔 **سؤالك عن {subject}**
+
+رائع! أنت تسأل عن **{subject}**. 
+حالياً، أركز على تقديم إجابات عامة لهذه المادة.
+
+💡 **اقتراحات للمساعدة:**
+- أضف كتباً أو مستندات عن {subject} لتحصل على إجابات أدق
+- اطرح أسئلة محددة عن المفاهيم الأساسية
+- يمكنني مساعدتك في البحث عن المعلومات
+
+🔍 **جاري البحث في المواد المتاحة...**
+""",
+        "en": f"""
+🤔 **Your question about {subject}**
+
+Great! You're asking about **{subject}**.
+Currently, I'm providing general answers for this subject.
+
+💡 **Suggestions to help:**
+- Add books or documents about {subject} for more accurate answers
+- Ask specific questions about basic concepts  
+- I can help you search for information
+
+🔍 **Searching in available materials...**
+""",
+        "fr": f"""
+🤔 **Votre question sur {subject}**
+
+Excellent! Vous posez une question sur **{subject}**.
+Actuellement, je fournis des réponses générales pour cette matière.
+
+💡 **Suggestions pour vous aider:**
+- Ajoutez des livres ou documents sur {subject} pour des réponses plus précises
+- Posez des questions spécifiques sur les concepts de base
+- Je peux vous aider à rechercher des informations
+
+🔍 **Recherche dans les documents disponibles...**
+"""
+    }
+    
+    return templates.get(target_language, templates["ar"])

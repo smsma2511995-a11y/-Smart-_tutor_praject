@@ -286,3 +286,72 @@ def _detect_new_subject(self, text, language):
         return max(scores.items(), key=lambda x: x[1])[0]
     
     return "general"  # إذا لم يتم التعرف، نستخدم الوضع العام
+# أضف هذا في models/knowledge_base.py داخل _load_comprehensive_knowledge
+def _load_comprehensive_knowledge(self):
+    return {
+        # ... المواد الحالية
+        
+        # إضافة مواد جديدة
+        "physics": {
+            "name": {"ar": "الفيزياء", "en": "Physics", "fr": "Physique"},
+            "concepts": {
+                "mechanics": {
+                    "ar": "الميكانيكا تدرس الحركة والقوى والطاقة",
+                    "en": "Mechanics studies motion, forces, and energy", 
+                    "fr": "La mécanique étudie le mouvement, les forces et l'énergie"
+                },
+                "optics": {
+                    "ar": "البصريات تدرس الضوء وخصائصه وتفاعله مع المادة",
+                    "en": "Optics studies light, its properties, and interaction with matter",
+                    "fr": "L'optique étudie la lumière, ses propriétés et son interaction avec la matière"
+                }
+            },
+            "keywords": {
+                "ar": ["قوة", "طاقة", "حركة", "ضوء", "صوت", "حرارة", "كهرباء", "مغناطيس"],
+                "en": ["force", "energy", "motion", "light", "sound", "heat", "electricity", "magnet"],
+                "fr": ["force", "énergie", "mouvement", "lumière", "son", "chaleur", "électricité", "aimant"]
+            }
+        },
+        
+        "chemistry": {
+            "name": {"ar": "الكيمياء", "en": "Chemistry", "fr": "Chimie"},
+            "concepts": {
+                "organic": {
+                    "ar": "الكيمياء العضوية تدرس مركبات الكربون وتفاعلاتها",
+                    "en": "Organic chemistry studies carbon compounds and their reactions",
+                    "fr": "La chimie organique étudie les composés carbonés et leurs réactions"
+                },
+                "inorganic": {
+                    "ar": "الكيمياء غير العضوية تدرس العناصر والمركبات غير العضوية",
+                    "en": "Inorganic chemistry studies elements and inorganic compounds",
+                    "fr": "La chimie inorganique étudie les éléments et composés inorganiques"
+                }
+            },
+            "keywords": {
+                "ar": ["عنصر", "مركب", "تفاعل", "ذرة", "جزيء", "حمض", "قلوي", "محلول"],
+                "en": ["element", "compound", "reaction", "atom", "molecule", "acid", "base", "solution"],
+                "fr": ["élément", "composé", "réaction", "atome", "molécule", "acide", "base", "solution"]
+            }
+        },
+        
+        "history": {
+            "name": {"ar": "التاريخ", "en": "History", "fr": "Histoire"},
+            "concepts": {
+                "ancient": {
+                    "ar": "التاريخ القديم يدرس الحضارات الأولى وتطور المجتمعات البشرية",
+                    "en": "Ancient history studies early civilizations and human society development",
+                    "fr": "L'histoire ancienne étudie les premières civilisations et le développement des sociétés humaines"
+                },
+                "modern": {
+                    "ar": "التاريخ الحديث يدرس الفترة من القرن الخامس عشر إلى الوقت الحاضر",
+                    "en": "Modern history studies the period from the 15th century to the present",
+                    "fr": "L'histoire moderne étudie la période du XVe siècle à nos jours"
+                }
+            },
+            "keywords": {
+                "ar": ["تاريخ", "حضارة", "امبراطورية", "ملك", "معركة", "ثورة", "قديم", "حديث"],
+                "en": ["history", "civilization", "empire", "king", "battle", "revolution", "ancient", "modern"],
+                "fr": ["histoire", "civilisation", "empire", "roi", "bataille", "révolution", "ancien", "moderne"]
+            }
+        }
+        }

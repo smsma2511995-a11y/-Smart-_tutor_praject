@@ -210,3 +210,79 @@ class EducationalKnowledgeBase:
         # إرجاع المادة ذات أعلى درجة، أو الرياضيات كافتراضي
         best_subject = max(scores.items(), key=lambda x: x[1])[0] if scores else "math"
         return best_subject if scores[best_subject] > 0 else "math"
+# في models/knowledge_base.py - محسن لكشف أي مادة
+def detect_subject(self, text, language):
+    """كشف المادة الدراسية - يعمل مع أي مادة جديدة"""
+    text_lower = text.lower()
+    scores = {}
+    
+    # 1. البحث في المواد المعرفة مسبقاً
+    for subject, data in self.subjects.items():
+        score = 0
+        
+        # البحث في الكلمات المفتاحية
+        keywords = data["keywords"].get(language, [])
+        for keyword in keywords:
+            if keyword in text_lower:
+                score += 2
+        
+        # البحث في أسماء المفاهيم
+        for concept_name in data["concepts"].keys():
+            if concept_name in text_lower:
+                score += 3
+        
+        # البحث في أسماء المواد
+        for lang in ["ar", "en", "fr"]:
+            subject_name = data["name"][lang].lower()
+            if subject_name in text_lower:
+                score += 5
+        
+        scores[subject] = score
+    
+    # 2. إذا لم توجد نتائج قوية، نستخدم الكشف الذكي للمواد الجديدة
+    if not scores or max(scores.values()) < 2:
+        return self._detect_new_subject(text, language)
+    
+    best_subject = max(scores.items(), key=lambda x: x[1])[0]
+    return best_subject
+
+def _detect_new_subject(self, text, language):
+    """كشف المواد الجديدة بناءً على المحتوى"""
+    text_lower = text.lower()
+    
+    # كلمات مفتاحية للمواد الشائعة
+    subject_keywords = {
+        "physics": {
+            "ar": ["طاقة", "قوة", "حركة", "سرعة", "تسارع", "كتلة", "شحنة", "مغناطيس"],
+            "en": ["energy", "force", "motion", "velocity", "acceleration", "mass", "charge", "magnet"],
+            "fr": ["énergie", "force", "mouvement", "vitesse", "accélération", "masse", "charge", "aimant"]
+        },
+        "chemistry": {
+            "ar": ["عنصر", "مركب", "تفاعل", "ذرة", "جزيء", "ph", "حمض", "قلوي"],
+            "en": ["element", "compound", "reaction", "atom", "molecule", "ph", "acid", "base"],
+            "fr": ["élément", "composé", "réaction", "atome", "molécule", "ph", "acide", "base"]
+        },
+        "history": {
+            "ar": ["تاريخ", "حضارة", "امبراطورية", "ملك", "معركة", "ثورة", "قديم", "وسيط"],
+            "en": ["history", "civilization", "empire", "king", "battle", "revolution", "ancient", "medieval"],
+            "fr": ["histoire", "civilisation", "empire", "roi", "bataille", "révolution", "ancien", "médiéval"]
+        },
+        "geography": {
+            "ar": ["خريطة", "قارة", "محيط", "جبل", "نهر", "مناخ", "تضاريس", "دولة"],
+            "en": ["map", "continent", "ocean", "mountain", "river", "climate", "terrain", "country"],
+            "fr": ["carte", "continent", "océan", "montagne", "rivière", "climat", "relief", "pays"]
+        }
+    }
+    
+    scores = {}
+    for subject, keywords in subject_keywords.items():
+        score = 0
+        for keyword in keywords.get(language, []):
+            if keyword in text_lower:
+                score += 2
+        scores[subject] = score
+    
+    if scores and max(scores.values()) > 0:
+        return max(scores.items(), key=lambda x: x[1])[0]
+    
+    return "general"  # إذا لم يتم التعرف، نستخدم الوضع العام

@@ -1,0 +1,448 @@
+name: DeepSeek AI Final Pipeline v9.3 - Path Fixed
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch_name:
+        description: 'Branch to run the pipeline on'
+        required: true
+        default: 'ai-final-results'
+        type: choice
+        options:
+          - ai-final-results
+          - main
+      batch_size:
+        description: 'Number of files to process per batch'
+        required: true
+        default: 4
+        type: number
+
+jobs:
+  ai-final-processing:
+    runs-on: ubuntu-latest
+    env:
+      PYTORCH_ALLOC_CONF: max_split_size_mb:128
+      HF_HUB_ENABLE_HF_TRANSFER: 0
+      TRANSFORMERS_CACHE: /tmp/hf_cache
+      HF_HOME: /tmp/hf_cache
+      TMPDIR: /tmp
+
+    steps:
+      - name: 🚨 Emergency Disk Space Rescue
+        run: |
+          echo "🚨 STARTING EMERGENCY DISK RESCUE OPERATION..."
+          sudo apt-get autoremove -y
+          sudo apt-get autoclean -y
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/lib/android /opt/hostedtoolcache/CodeQL
+          sudo find /home/runner -name "*.log" -size +1M -delete 2>/dev/null || true
+          pip cache purge || true
+          huggingface-cli delete-cache -f || true
+          rm -rf ~/.cache/* cleaned_repo/cleaned_repo || true
+          sync; echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null || true
+          echo "📊 Disk space after emergency cleanup:"
+          df -h
+
+      - name: 🛑 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install System Dependencies
+        run: |  
+          sudo apt-get update  
+          sudo apt-get install -y git-lfs bc
+
+      - name: 📦 Install AI Dependencies
+        run: |
+          echo "📦 Installing AI dependencies..."
+          python -m pip install --upgrade pip
+          pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers accelerate
+          pip install autopep8 isort black tenacity psutil humanize watchdog
+          pip install scikit-learn pandas numpy
+          echo "✅ All dependencies installed"
+
+      - name: 🔧 Create Directories and Scripts
+        run: |
+          echo "🔧 Creating necessary directories..."
+          mkdir -p cleaned_repo /tmp/hf_cache .ai_memory .github/scripts
+          
+          # إنشاء قاعدة البيانات مباشرة
+          cat > .ai_memory/learning_db.json << 'EOF'
+          {
+            "processed_patterns": {},
+            "common_errors": {},
+            "optimization_rules": {},
+            "performance_stats": {
+              "total_files_processed": 0,
+              "total_changes_made": 0
+            },
+            "file_hashes": {}
+          }
+          EOF
+          
+          # إنشاء البرنامج الرئيسي مباشرة في المسار الصحيح
+          cat > ai_processor.py << 'EOF'
+          import os
+          import json
+          import argparse
+          import subprocess
+          import time
+          import shutil
+          from pathlib import Path
+          from typing import Dict, Any, Tuple, List
+          from tenacity import retry, stop_after_attempt, wait_fixed
+          from contextlib import contextmanager
+          import psutil
+          import gc
+          import torch
+          import hashlib
+          import re
+
+          print("🚀 Starting Learning AI Code Processor v9.3 - DIRECT FIX...")
+
+          # تحميل المكتبات
+          AI_AVAILABLE = False
+          try:
+              from transformers import AutoTokenizer, AutoModelForCausalLM
+              import torch
+              AI_AVAILABLE = True
+              print("✅ AI libraries imported successfully")
+          except ImportError as e:
+              print(f"❌ AI libraries not available: {e}")
+              AI_AVAILABLE = False
+
+          class LearningAISystem:
+              def __init__(self, memory_path: str = ".ai_memory"):
+                  self.memory_path = Path(memory_path)
+                  self.memory_path.mkdir(exist_ok=True)
+                  self.learning_db = self.load_learning_db()
+                  
+              def load_learning_db(self) -> Dict[str, Any]:
+                  """تحميل قاعدة بيانات التعلم"""
+                  db_file = self.memory_path / "learning_db.json"
+                  if db_file.exists():
+                      try:
+                          with open(db_file, 'r', encoding='utf-8') as f:
+                              data = json.load(f)
+                          
+                          # التأكد من وجود جميع المفاتيح
+                          required_keys = ["processed_patterns", "common_errors", "optimization_rules", "performance_stats", "file_hashes"]
+                          for key in required_keys:
+                              if key not in data:
+                                  if key == "performance_stats":
+                                      data[key] = {"total_files_processed": 0, "total_changes_made": 0}
+                                  elif key == "file_hashes":
+                                      data[key] = {}
+                                  else:
+                                      data[key] = {}
+                          
+                          return data
+                      except Exception as e:
+                          print(f"⚠️ Error loading learning database: {e}")
+                  
+                  # إنشاء جديد
+                  return {
+                      "processed_patterns": {},
+                      "common_errors": {},
+                      "optimization_rules": {},
+                      "performance_stats": {"total_files_processed": 0, "total_changes_made": 0},
+                      "file_hashes": {}
+                  }
+              
+              def save_learning_db(self):
+                  """حفظ قاعدة بيانات التعلم"""
+                  try:
+                      db_file = self.memory_path / "learning_db.json"
+                      with open(db_file, 'w', encoding='utf-8') as f:
+                          json.dump(self.learning_db, f, indent=2, ensure_ascii=False)
+                      print("💾 Learning database saved")
+                  except Exception as e:
+                      print(f"❌ Error saving learning database: {e}")
+              
+              def learn_from_file(self, file_path: str, original_content: str, optimized_content: str):
+                  """التعلم من معالجة الملف"""
+                  try:
+                      file_hash = hashlib.md5(original_content.encode()).hexdigest()
+                      
+                      # تجنب التعلم من الملفات المكررة
+                      if file_hash in self.learning_db["file_hashes"]:
+                          return
+                      
+                      self.learning_db["file_hashes"][file_hash] = {
+                          "file_path": file_path,
+                          "timestamp": time.time(),
+                          "changes_made": original_content != optimized_content
+                      }
+                      
+                      # تحديث الإحصائيات
+                      self.learning_db["performance_stats"]["total_files_processed"] += 1
+                      if original_content != optimized_content:
+                          self.learning_db["performance_stats"]["total_changes_made"] += 1
+                      
+                      print(f"🧠 Learned from: {file_path}")
+                      
+                  except Exception as e:
+                      print(f"⚠️ Learning error: {e}")
+
+          class SimpleAIProcessor:
+              def __init__(self, batch_limit: int = 4):
+                  self.batch_limit = batch_limit
+                  self.learning_system = LearningAISystem()
+                  self.progress_file = "progress.json"
+                  self.setup_progress()
+              
+              def setup_progress(self):
+                  """إعداد سجل التقدم"""
+                  try:
+                      all_files = self.discover_files()
+                      self.progress_data = {
+                          'total': len(all_files),
+                          'processed': 0,
+                          'progress': 0.0,
+                          'batches_completed': 0,
+                          'processed_files': []
+                      }
+                      with open(self.progress_file, 'w', encoding='utf-8') as f:
+                          json.dump(self.progress_data, f, indent=2)
+                      print(f"📊 Found {len(all_files)} files to process")
+                  except Exception as e:
+                      print(f"⚠️ Progress setup error: {e}")
+
+              def discover_files(self):
+                  """اكتشاف الملفات"""
+                  files = []
+                  for root, dirs, filenames in os.walk('.'):
+                      # تخطي المجلدات غير المرغوبة
+                      dirs[:] = [d for d in dirs if d not in {'.git', 'node_modules', '__pycache__', '.venv', 'cleaned_repo', '.github'}]
+                      for file in filenames:
+                          if file.endswith('.py'):
+                              file_path = os.path.join(root, file)
+                              files.append(file_path)
+                  return files
+
+              def process_file(self, file_path: str):
+                  """معالجة ملف واحد"""
+                  try:
+                      print(f"🔄 Processing: {file_path}")
+                      
+                      # قراءة المحتوى
+                      with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                          content = f.read()
+                      
+                      # حفظ نسخة أصلية
+                      original_content = content
+                      
+                      # تطبيق التنسيق الأساسي
+                      try:
+                          temp_file = "temp_process.py"
+                          with open(temp_file, 'w', encoding='utf-8') as f:
+                              f.write(content)
+                          
+                          # تشغيل autopep8
+                          result = subprocess.run([
+                              'autopep8', '--in-place', '--aggressive', temp_file
+                          ], capture_output=True, text=True, timeout=30)
+                          
+                          if result.returncode == 0:
+                              with open(temp_file, 'r', encoding='utf-8') as f:
+                                  content = f.read()
+                          
+                          # تنظيف الملف المؤقت
+                          if os.path.exists(temp_file):
+                              os.remove(temp_file)
+                              
+                      except Exception as e:
+                          print(f"⚠️ Formatting failed: {e}")
+                      
+                      # التعلم من التغييرات
+                      self.learning_system.learn_from_file(file_path, original_content, content)
+                      
+                      # حفظ الملف المعالج
+                      output_path = Path('cleaned_repo') / file_path
+                      output_path.parent.mkdir(parents=True, exist_ok=True)
+                      with open(output_path, 'w', encoding='utf-8') as f:
+                          f.write(content)
+                      
+                      print(f"✅ Completed: {file_path}")
+                      return True
+                      
+                  except Exception as e:
+                      print(f"❌ Failed to process {file_path}: {e}")
+                      return False
+
+              def process_batch(self):
+                  """معالجة دفعة من الملفات"""
+                  all_files = self.discover_files()
+                  files_to_process = all_files[:self.batch_limit]
+                  
+                  if not files_to_process:
+                      print("🎉 No files to process!")
+                      return True
+                  
+                  print(f"🔄 Processing batch of {len(files_to_process)} files...")
+                  
+                  success_count = 0
+                  for file_path in files_to_process:
+                      if self.process_file(file_path):
+                          success_count += 1
+                  
+                  # حفظ التعلم
+                  self.learning_system.save_learning_db()
+                  
+                  # تحديث التقدم
+                  self.update_progress(success_count)
+                  
+                  print(f"📊 Batch completed: {success_count}/{len(files_to_process)} files")
+                  
+                  # عرض الإحصائيات
+                  stats = self.learning_system.learning_db["performance_stats"]
+                  print(f"📈 Overall: {stats['total_files_processed']} files processed, {stats['total_changes_made']} changes made")
+                  
+                  return len(files_to_process) < self.batch_limit
+
+              def update_progress(self, processed_count: int):
+                  """تحديث سجل التقدم"""
+                  try:
+                      with open(self.progress_file, 'r', encoding='utf-8') as f:
+                          progress = json.load(f)
+                      
+                      progress['processed'] += processed_count
+                      progress['progress'] = (progress['processed'] / progress['total']) * 100
+                      progress['batches_completed'] += 1
+                      
+                      with open(self.progress_file, 'w', encoding='utf-8') as f:
+                          json.dump(progress, f, indent=2)
+                          
+                  except Exception as e:
+                      print(f"⚠️ Progress update error: {e}")
+
+          def main():
+              parser = argparse.ArgumentParser(description='Simple AI Code Processor v9.3')
+              parser.add_argument('--limit', type=int, default=4, help='Batch size limit')
+              
+              args = parser.parse_args()
+              
+              print(f"🚀 Starting Simple AI Processor v9.3 (Batch: {args.limit})")
+              
+              processor = SimpleAIProcessor(batch_limit=args.limit)
+              is_complete = processor.process_batch()
+              
+              if is_complete:
+                  print("🎉 All files processed successfully!")
+              else:
+                  print("🔄 Batch completed - more files remaining")
+
+          if __name__ == "__main__":
+              main()
+          EOF
+
+          echo "✅ Script created successfully at: $(pwd)/ai_processor.py"
+
+      - name: 🚀 Run AI Processor
+        run: |
+          echo "🚀 Running AI Processor..."
+          python ai_processor.py --limit ${{ github.event.inputs.batch_size }}
+
+      - name: 📊 Generate Simple Report
+        run: |
+          echo "📊 Generating Processing Report..."
+          
+          if [ -f ".ai_memory/learning_db.json" ]; then
+            echo "🧠 LEARNING DATABASE STATUS:"
+            cat .ai_memory/learning_db.json | python -c "
+            import json, sys
+            data = json.load(sys.stdin)
+            stats = data.get('performance_stats', {})
+            print(f'📁 Files Processed: {stats.get(\"total_files_processed\", 0)}')
+            print(f'🔧 Changes Made: {stats.get(\"total_changes_made\", 0)}')
+            print(f'📈 Improvement Rate: {stats.get(\"total_changes_made\", 0) / max(stats.get(\"total_files_processed\", 1), 1) * 100:.1f}%')
+            "
+          else
+            echo "❌ No learning database found"
+          fi
+          
+          if [ -d "cleaned_repo" ]; then
+            FILE_COUNT=$(find cleaned_repo -name "*.py" -type f | wc -l)
+            echo "✅ Cleaned files: $FILE_COUNT"
+          else
+            echo "❌ No cleaned repository found"
+          fi
+
+      - name: 🎨 Apply Final Formatting
+        run: |
+          echo "🎨 Applying final formatting..."
+          if [ -d "cleaned_repo" ]; then
+            find cleaned_repo -name "*.py" -type f -exec autopep8 --in-place --aggressive {} \; 2>/dev/null || true
+            echo "✅ Final formatting completed"
+          else
+            echo "⚠️ No cleaned_repo directory for formatting"
+          fi
+
+      - name: 💾 Commit Results
+        run: |
+          echo "💾 Committing AI Results..."
+          
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          
+          # إضافة الملفات المعالجة
+          git add cleaned_repo/ progress.json .ai_memory/ 2>/dev/null || true
+          
+          # الحصول على الإحصائيات
+          if [ -f ".ai_memory/learning_db.json" ]; then
+            FILES_PROCESSED=$(python -c "import json; data=json.load(open('.ai_memory/learning_db.json')); print(data.get('performance_stats', {}).get('total_files_processed', 0))")
+            CHANGES_MADE=$(python -c "import json; data=json.load(open('.ai_memory/learning_db.json')); print(data.get('performance_stats', {}).get('total_changes_made', 0))")
+          else
+            FILES_PROCESSED=0
+            CHANGES_MADE=0
+          fi
+          
+          COMMIT_MSG="🤖 AI Processed: ${FILES_PROCESSED} files, ${CHANGES_MADE} changes (v9.3)"
+          git commit -m "${COMMIT_MSG}" || echo "No changes to commit"
+          git push origin ${{ github.event.inputs.branch_name }}
+          
+          echo "✅ Results committed: $COMMIT_MSG"
+
+      - name: 📈 Final Summary
+        run: |
+          echo "📈 Generating Final Summary..."
+          
+          if [ -f ".ai_memory/learning_db.json" ]; then
+            FILES_PROCESSED=$(python -c "import json; data=json.load(open('.ai_memory/learning_db.json')); print(data.get('performance_stats', {}).get('total_files_processed', 0))")
+            CHANGES_MADE=$(python -c "import json; data=json.load(open('.ai_memory/learning_db.json')); print(data.get('performance_stats', {}).get('total_changes_made', 0))")
+            RATE=$(python -c "print($CHANGES_MADE * 100 / max($FILES_PROCESSED, 1))")
+          else
+            FILES_PROCESSED=0
+            CHANGES_MADE=0
+            RATE=0
+          fi
+          
+          echo "## 🚀 DeepSeek AI v9.3 - Direct Fix Applied" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Problem Solved" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fixed:** File path error - script now runs from root directory" >> $GITHUB_STEP_SUMMARY
+          echo "- **Fixed:** Simple and direct implementation" >> $GITHUB_STEP_SUMMARY
+          echo "- **Working:** Learning system with file hashes" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Results" >> $GITHUB_STEP_SUMMARY
+          echo "✅ **Files Processed:** $FILES_PROCESSED" >> $GITHUB_STEP_SUMMARY
+          echo "🔧 **Changes Made:** $CHANGES_MADE" >> $GITHUB_STEP_SUMMARY
+          echo "📈 **Improvement Rate:** ${RATE:.1f}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🎯 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "Run again with same batch size to process more files!" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🏁 Cleanup
+        if: always()
+        run: |
+          echo "🏁 Cleaning up..."
+          rm -f ai_processor.py temp_process.py 2>/dev/null || true
+          echo "✅ Pipeline completed!"

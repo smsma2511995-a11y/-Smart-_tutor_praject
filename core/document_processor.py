@@ -207,8 +207,8 @@ def _add_new_subject_to_knowledge(self, subject):
     if subject not in self.ram_knowledge:
         self.ram_knowledge[subject] = {}
     
-    # يمكن حفظها بشكل دائم أيضاً
-    self._save_subject_knowledge(subject, basic_concepts)
+        # يمكن حفظها بشكل دائم أيضاً
+        self._save_subject_knowledge(subject, basic_concepts)
         # إنشاء التضمينات
         embeddings = self.embed_texts(chunks)
         

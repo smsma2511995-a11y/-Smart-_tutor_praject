@@ -189,7 +189,7 @@ self.subject_spinner = Spinner(
     size_hint=(0.25, 1),
     background_color=(0.3, 0.5, 0.9, 1)
         )
-            }
+            
             subject = subject_map.get(self.subject_spinner.text)
         
         # تشغيل المعالجة في thread منفصل

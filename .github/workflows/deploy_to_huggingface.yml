@@ -1,0 +1,18 @@
+name: Deploy to Hugging Face Space
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload to Hugging Face
+        run: |
+          pip install -U huggingface_hub
+          huggingface-cli login --token ${{ secrets.HF_TOKEN }}
+          huggingface-cli upload . --repo-type space --repo-id Mahmoud12347/smart_tutor --private
